@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Banco de pruebas · Banish</title>
+  <style>
+    body { font-family: system-ui, sans-serif; color: #1a1a1a; max-width: 720px; margin: 0 auto; padding: 24px; line-height: 1.6; }
+    h1 { font-size: 22px; }
+    .controls { position: sticky; top: 0; background: #fff; padding: 12px 0; border-bottom: 1px solid #eee; display: flex; flex-wrap: wrap; gap: 8px; }
+    .controls button { padding: 8px 12px; border: 1px solid #2b6cf6; background: #fff; color: #2b6cf6; border-radius: 8px; cursor: pointer; font-size: 13px; }
+    .filler p { margin: 16px 0; }
+
+    /* --- Cookie banner (framework tipo OneTrust: lo cubre el "Modo genérico") --- */
+    #cookie-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #20242b; color: #fff; padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; z-index: 1000; }
+    #onetrust-accept-btn-handler { background: #2b6cf6; color: #fff; border: 0; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+    /* --- Modal de newsletter (close por aria-label / overlay por clase) --- */
+    .newsletter-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 1001; }
+    .newsletter-dialog { background: #fff; border-radius: 12px; padding: 28px; max-width: 360px; text-align: center; position: relative; }
+    .modal-close { position: absolute; top: 8px; right: 10px; background: none; border: 0; font-size: 20px; cursor: pointer; color: #555; }
+
+    /* --- Paywall "inicia sesión para continuar" (bloquea scroll) --- */
+    .paywall-backdrop { position: fixed; inset: 0; background: rgba(255,255,255,.92); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; z-index: 1002; }
+    .paywall-backdrop button { margin-top: 12px; padding: 10px 18px; border: 0; border-radius: 8px; background: #1a1a1a; color: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button onclick="showCookie()">Cookie banner</button>
+    <button onclick="showNewsletter()">Newsletter modal</button>
+    <button onclick="showPaywall()">Paywall (bloquea scroll)</button>
+    <button onclick="spawnAllDelayed()">Disparar TODO tras 3 s</button>
+    <button onclick="location.reload()">Reiniciar</button>
+  </div>
+
+  <h1>Banco de pruebas de Banish</h1>
+  <p><b>Importante:</b> la extensión solo actúa en sitios que actives. Abre el popup de la extensión y marca <i>“Activar en este sitio”</i> + <i>“Modo genérico”</i>, o usa el picker 🎯. Luego pulsa los botones de arriba.</p>
+  <p>Qué comprobar:</p>
+  <ul>
+    <li><b>Modo genérico</b> → cierra el cookie banner y el modal de newsletter sin configurar nada.</li>
+    <li><b>Picker 🎯 Botón de cerrar</b> → sobre la ✕ del modal (genera <code>button[aria-label="Close"]</code>).</li>
+    <li><b>Picker 🎯 Overlay</b> → sobre el fondo del paywall (genera <code>.paywall-backdrop</code> y reactiva el scroll).</li>
+    <li><b>MutationObserver</b> → “Disparar TODO tras 3 s” prueba que caza popups que aparecen con retraso.</li>
+  </ul>
+
+  <div class="filler">
+    <p>Contenido de relleno para que el bloqueo de scroll se note. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+    <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate.</p>
+    <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error.</p>
+    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
+    <p>Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore.</p>
+    <p>Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla.</p>
+    <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias.</p>
+    <p>Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod.</p>
+  </div>
+
+  <script>
+    // Los popups se CREAN al vuelo (mutación real que el MutationObserver caza)
+    // y sus botones cierran de verdad, como en un sitio real.
+    function lockScroll()   { document.body.style.overflow = "hidden"; }
+    function unlockScroll() { document.body.style.overflow = ""; }
+    function exists(id)     { return !!document.getElementById(id); }
+
+    function showCookie() {
+      if (exists("cookie-bar")) return;
+      const bar = document.createElement("div");
+      bar.id = "cookie-bar";
+      bar.innerHTML = '<span>Usamos cookies para mejorar tu experiencia.</span>' +
+                      '<button id="onetrust-accept-btn-handler">Aceptar todas</button>';
+      document.body.appendChild(bar);
+      bar.querySelector("#onetrust-accept-btn-handler")
+         .addEventListener("click", () => bar.remove());
+    }
+
+    function showNewsletter() {
+      if (document.querySelector(".newsletter-overlay")) return;
+      const ov = document.createElement("div");
+      ov.className = "newsletter-overlay";
+      ov.innerHTML =
+        '<div class="newsletter-dialog">' +
+        '  <button class="modal-close" aria-label="Close">&times;</button>' +
+        '  <h2>¡Suscríbete!</h2>' +
+        '  <p>Recibe nuestras ofertas semanales en tu correo.</p>' +
+        '  <input type="email" placeholder="tu@email.com" style="width:100%;padding:8px;margin-top:8px;box-sizing:border-box" />' +
+        '</div>';
+      document.body.appendChild(ov);
+      lockScroll();
+      ov.querySelector(".modal-close").addEventListener("click", () => { ov.remove(); unlockScroll(); });
+    }
+
+    function showPaywall() {
+      if (document.querySelector(".paywall-backdrop")) return;
+      const pw = document.createElement("div");
+      pw.className = "paywall-backdrop";
+      pw.innerHTML =
+        '<h2>Inicia sesión para continuar</h2>' +
+        '<p>Este contenido es solo para miembros.</p>' +
+        '<button>Iniciar sesión</button>';
+      document.body.appendChild(pw);
+      lockScroll();
+      // Sin botón de cerrar a propósito: se prueba con el picker 🎯 Overlay (eliminar).
+    }
+
+    // Aparición con retraso: prueba que el MutationObserver siga cazándolos.
+    function spawnAllDelayed() {
+      setTimeout(showCookie, 3000);
+      setTimeout(showNewsletter, 3500);
+      setTimeout(showPaywall, 4000);
+    }
+
+    // Al cargar, lanza un par para tener algo que probar de inmediato.
+    setTimeout(showCookie, 800);
+    setTimeout(showNewsletter, 1500);
+  </script>
+</body>
+</html>

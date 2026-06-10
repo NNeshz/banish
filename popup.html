@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    :root {
+      --bg: #1b1f26;
+      --surface: #232831;
+      --surface-2: #161a20;
+      --border: #333b46;
+      --text: #e7e9ec;
+      --muted: #9aa3af;
+      --accent: #e8623d;        /* coral estilo Dark Reader */
+      --accent-soft: #f08767;
+      --ok: #54c98a;
+      --danger: #f0796a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      width: 300px; margin: 0; background: var(--bg); color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased;
+    }
+    .wrap { padding: 16px; }
+    h1 {
+      font-size: 19px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase;
+      color: var(--accent); margin: 0 0 12px; text-align: center;
+    }
+    hr { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
+
+    .host {
+      display: block; border: 1px solid var(--border); background: var(--surface);
+      border-radius: 8px; padding: 8px 10px; font-size: 12px; color: var(--accent-soft);
+      margin: 0 0 14px; word-break: break-all; text-align: center;
+    }
+
+    label {
+      display: flex; align-items: center; gap: 9px; font-size: 13px;
+      margin-bottom: 12px; cursor: pointer; color: var(--text);
+    }
+    label.global { font-weight: 700; margin-bottom: 0; }
+    input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex: none; }
+
+    .field { margin-bottom: 12px; }
+    .field span { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+    textarea {
+      width: 100%; height: 48px; resize: vertical; padding: 8px;
+      font-size: 12px; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      color: var(--text); background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 8px; outline: none;
+    }
+    textarea::placeholder { color: #5b6470; }
+    textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(232,98,61,.2); }
+
+    .pick-row { display: flex; gap: 8px; }
+    button.pick {
+      flex: 1; padding: 9px; font-size: 12px; font-weight: 600; cursor: pointer;
+      color: var(--accent-soft); background: transparent;
+      border: 1px solid var(--accent); border-radius: 8px;
+    }
+    button.pick:hover { background: rgba(232,98,61,.12); }
+    button.pick:disabled { border-color: var(--border); color: var(--muted); cursor: not-allowed; }
+
+    button#save {
+      width: 100%; padding: 11px; font-size: 13px; font-weight: 700; cursor: pointer;
+      border: 0; border-radius: 8px; background: var(--accent); color: #fff;
+    }
+    button#save:hover { background: var(--accent-soft); }
+    button#save:disabled { background: #4a3b36; color: var(--muted); cursor: not-allowed; }
+
+    .hint { font-size: 11px; color: var(--muted); margin: 0 0 12px; line-height: 1.45; }
+    .status { margin-top: 9px; font-size: 12px; color: var(--ok); min-height: 14px; text-align: center; }
+
+    details.sites { margin-top: 14px; font-size: 12px; }
+    details.sites summary { cursor: pointer; color: var(--accent-soft); font-weight: 700; list-style: none; }
+    details.sites summary::-webkit-details-marker { display: none; }
+    details.sites summary::before { content: "▸ "; color: var(--muted); }
+    details.sites[open] summary::before { content: "▾ "; }
+    #siteList { list-style: none; margin: 10px 0 0; padding: 0; }
+    #siteList li {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px;
+      background: var(--surface);
+    }
+    #siteList li span { word-break: break-all; color: var(--text); }
+    #siteList li.empty { color: var(--muted); background: transparent; border-style: dashed; }
+    #siteList button.rm { background: none; border: 0; color: var(--danger); cursor: pointer; font-size: 14px; padding: 0 4px; }
+
+    .section-disabled { opacity: 0.4; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Banish</h1>
+    <label class="global"><input type="checkbox" id="globalEnabled"> Extensión activa</label>
+    <hr>
+
+    <div id="siteSection">
+      <span class="host" id="host">…</span>
+      <label><input type="checkbox" id="enabled"> Activar en este sitio</label>
+      <label><input type="checkbox" id="generic"> Modo genérico (cierra popups comunes sin configurar)</label>
+      <p class="hint">¿No eres técnico? Marca las dos casillas de arriba y listo. Los cambios se aplican al instante en la pestaña activa.</p>
+      <div class="field">
+        <span>Botones de cerrar (se les da clic):</span>
+        <textarea id="dismiss" placeholder="button[aria-label='Close']&#10;.modal-close"></textarea>
+      </div>
+      <div class="field">
+        <span>Overlays a eliminar:</span>
+        <textarea id="remove" placeholder=".newsletter-overlay&#10;.paywall-backdrop"></textarea>
+      </div>
+      <div class="field">
+        <span>O elígelo con un clic en la página:</span>
+        <div class="pick-row">
+          <button type="button" class="pick" id="pickDismiss">🎯 Botón de cerrar</button>
+          <button type="button" class="pick" id="pickRemove">🎯 Overlay</button>
+        </div>
+      </div>
+      <label><input type="checkbox" id="unlockScroll"> Reactivar scroll</label>
+      <button id="save">Guardar</button>
+      <div class="status" id="status"></div>
+    </div>
+
+    <details class="sites">
+      <summary>Sitios activos</summary>
+      <ul id="siteList"></ul>
+    </details>
+  </div>
+  <script src="lib.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

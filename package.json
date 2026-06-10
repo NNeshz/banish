@@ -1,0 +1,14 @@
+{
+  "name": "banish",
+  "version": "1.3.0",
+  "private": true,
+  "description": "Banish — extensión de Chrome que cierra automáticamente popups, modales y overlays molestos en los sitios que tú elijas.",
+  "scripts": {
+    "test": "node --test",
+    "validate": "node --check lib.js && node --check selector.js && node --check content.js && node --check popup.js && node -e \"JSON.parse(require('fs').readFileSync('manifest.json','utf8'));console.log('manifest.json OK')\"",
+    "check": "npm run validate && npm test"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  }
+}
